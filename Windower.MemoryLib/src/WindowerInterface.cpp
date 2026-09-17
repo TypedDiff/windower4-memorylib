@@ -9,6 +9,8 @@ namespace memorylib
 
     	 	{ "findPattern"        , WindowerInterface::lua_findPattern },
 			{ "write_uint8"        , WindowerInterface::lua_write_uint8 },
+			{ "read"               , WindowerInterface::lua_readBytes },
+			{ "write"              , WindowerInterface::lua_writeBytes },
 			{ NULL, NULL }
 		};
 
@@ -51,5 +53,40 @@ namespace memorylib
 
 		return 1;
 	}
-}
 
+	int WindowerInterface::lua_readBytes(lua_State* L)
+	{
+		if (lua_gettop(L) != 2 || !lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
+			lua_pushstring(L, "invalid memory read parameters");
+			lua_error(L);
+		}
+
+		DWORD addr = lua_tonumber(L, 1);
+		size_t count = lua_tonumber(L, 2);
+
+
+		ByteArray bytes = MemFunctions::read_bytes(addr, count);
+		std::string bytes_str = MemFunctions::bytesToHex(bytes);
+
+		lua_pushstring(L, bytes_str.c_str());
+
+		return 1;
+	}
+
+	int WindowerInterface::lua_writeBytes(lua_State* L)
+	{
+		if (lua_gettop(L) != 2 || !lua_isnumber(L, 1) || !lua_isstring(L, 2)) {
+			lua_pushstring(L, "invalid memory write parameters");
+			lua_error(L);
+		}
+
+		DWORD addr = lua_tonumber(L, 1);
+		std::string value_str = lua_tostring(L, 2);
+
+		ByteArray value_bytes = MemFunctions::decodeHex(value_str);
+
+		MemFunctions::write_bytes(addr, value_bytes);
+
+		return 1;
+	}
+}
